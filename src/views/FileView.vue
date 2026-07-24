@@ -44,7 +44,7 @@ const fileinfo = ref({
 
 const route = useRoute()
 const router = useRouter()
-const userSotre = useUserStore()
+const userStore = useUserStore()
 
 const fileApi = new FileApi(import.meta.env.VITE_SANDCASTLE_API as string)
 
@@ -63,9 +63,9 @@ const _loadFileInfo = async () => {
   let response
 
   if (paramsFileId.length === 36) {
-    response = await fileApi.get(paramsFileId, userSotre.token)
+    response = await fileApi.get(paramsFileId, userStore.token)
   } else {
-    response = await fileApi.getById(Number(paramsFileId), userSotre.token)
+    response = await fileApi.getById(Number(paramsFileId), userStore.token)
   }
 
   const body = await response.json()

@@ -22,7 +22,7 @@ import { FakeProgress } from '@/utils/FakeProgress'
 import FileApi from '@/api/FileApi'
 
 const router = useRouter()
-const userSotre = useUserStore()
+const userStore = useUserStore()
 const fileApi = new FileApi(import.meta.env.VITE_SANDCASTLE_API as string)
 
 const fake = reactive(new FakeProgress({ timeConstant: 10000 }))
@@ -68,7 +68,7 @@ const handleChange = (event: Event) => {
 }
 
 const handlePublish = () => {
-  if (!userSotre.isLogin) {
+  if (!userStore.isLogin) {
     _errorMessage('尚未登录，请登录后再试。')
     return
   } else if (!file.value) {
@@ -88,13 +88,13 @@ const handlePublish = () => {
   fake.start()
 
   fileApi
-    .upload(file.value!, userSotre.token)
+    .upload(file.value!, userStore.token)
     .then(async (response) => {
       const body = await response.json()
       if (!response.ok) {
         switch (body?.code) {
           case -1000_1000:
-            userSotre.$reset()
+            userStore.$reset()
           default:
             throw new Error(`文件上传失败, ${body?.message}`)
         }
@@ -111,7 +111,7 @@ const handlePublish = () => {
           password: formValue.password,
           validity_period: formValue.validityPeriod,
         },
-        userSotre.token,
+        userStore.token,
       )
     })
     .then(async (response) => {
@@ -119,7 +119,7 @@ const handlePublish = () => {
       if (!response.ok) {
         switch (body?.code) {
           case -1000_1000:
-            userSotre.$reset()
+            userStore.$reset()
           default:
             throw new Error(`文件上传失败, ${body?.message}`)
         }
