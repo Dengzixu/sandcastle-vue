@@ -36,7 +36,7 @@ const formValue = reactive({
   password: '',
 })
 
-const haldleChooseFile = () => {
+const handleChooseFile = () => {
   const input = document.querySelector('#choose-file') as HTMLInputElement
   input?.click()
 }
@@ -147,7 +147,7 @@ const handlePublish = () => {
       <el-card class="mx-auto w-[80%]" shadow="hover" dsiable>
         <p class="py-6 text-center text-lg">
           将文件拖入，或者选择要
-          <el-button @click="haldleChooseFile">
+          <el-button @click="handleChooseFile">
             <span class="icon-[material-symbols--upload]"></span> 上传</el-button
           >
           的文件
