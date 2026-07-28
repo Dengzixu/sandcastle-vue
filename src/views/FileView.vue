@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, ref, onBeforeMount, type VNode } from 'vue'
+import { h, onBeforeMount, ref, type VNode } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import {
@@ -8,11 +8,11 @@ import {
   ElDescriptionsItem,
   ElDivider,
   ElImage,
+  ElMessage,
   ElMessageBox,
   ElSkeleton,
   ElSkeletonItem,
   ElTag,
-  ElMessage,
 } from 'element-plus'
 
 // 工具与 API

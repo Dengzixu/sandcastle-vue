@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, render, h } from 'vue'
+import { h, reactive, ref, render } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ElAlert,
@@ -20,6 +20,7 @@ import {
 import { useUserStore } from '@/stores/user'
 import { FakeProgress } from '@/utils/FakeProgress'
 import FileApi from '@/api/FileApi'
+import { errorMessage } from '@/utils/message'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -35,15 +36,6 @@ const formValue = reactive({
   password: '',
 })
 
-const _errorMessage = (message: string) => {
-  ElMessage({
-    message: message,
-    type: 'error',
-    duration: 15 * 1000,
-    showClose: true,
-  })
-}
-
 const haldleChooseFile = () => {
   const input = document.querySelector('#choose-file') as HTMLInputElement
   input?.click()
@@ -55,7 +47,7 @@ const handleChange = (event: Event) => {
   if (!input.files) {
     return
   } else if (!input.files[0]?.type?.startsWith('image')) {
-    _errorMessage('目前只支持图片文件')
+    errorMessage('目前只支持图片文件')
     return
   }
 
@@ -69,10 +61,10 @@ const handleChange = (event: Event) => {
 
 const handlePublish = () => {
   if (!userStore.isLogin) {
-    _errorMessage('尚未登录，请登录后再试。')
+    errorMessage('尚未登录，请登录后再试。')
     return
   } else if (!file.value) {
-    _errorMessage('未选择文件，请先选择文件。')
+    errorMessage('未选择文件，请先选择文件。')
     return
   }
 
@@ -140,7 +132,7 @@ const handlePublish = () => {
       })
     })
     .catch((e) => {
-      _errorMessage(`文件上传失败, ${e}`)
+      errorMessage(`文件上传失败, ${e}`)
       onUpload.value = false
     })
     .finally(() => {})
