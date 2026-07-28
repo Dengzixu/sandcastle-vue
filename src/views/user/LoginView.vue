@@ -53,13 +53,13 @@ const onSubmit = () => {
       const body = await response.json()
 
       if (!response.ok) {
-        switch (body?.code) {
+        switch (body?.error_code) {
           case -1800_0001:
-            formError.email = body.data?.email
-            formError.password = body.data?.password
+            formError.email = body.error_fields?.email
+            formError.password = body.error_fields?.password
             throw new Error('输入的数据不正确')
           default:
-            throw new Error(body.message ? body.message : '未知错误')
+            throw new Error(body.detail ? body.detail : '未知错误')
         }
       }
 

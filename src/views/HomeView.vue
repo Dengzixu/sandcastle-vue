@@ -88,7 +88,7 @@ const handlePublish = () => {
           case -1000_1000:
             userStore.$reset()
           default:
-            throw new Error(`文件上传失败, ${body?.message}`)
+            throw new Error(body?.detail)
         }
       }
       return body
@@ -113,7 +113,7 @@ const handlePublish = () => {
           case -1000_1000:
             userStore.$reset()
           default:
-            throw new Error(`文件上传失败, ${body?.message}`)
+            throw new Error(body?.detail)
         }
       }
 
