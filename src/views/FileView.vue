@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, onBeforeMount, ref, type VNode } from 'vue'
+import { h, onBeforeMount, onBeforeUnmount, ref, type VNode } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import {
@@ -96,11 +96,13 @@ const _loadFileInfo = async () => {
     size: body.object.size,
     encryptKey: body.object.encrypt_key,
   }
-
-  console.log(fileinfo.value)
 }
 
-const _downloadFile = async (url: string, type?: string): Promise<string> => {
+const _downloadFile = async (
+  url: string,
+  fileName: string,
+  contentType?: string,
+): Promise<string> => {
   const response = await fetchFile(url)
 
   const encryptedBuffer = await response.arrayBuffer()
@@ -109,7 +111,7 @@ const _downloadFile = async (url: string, type?: string): Promise<string> => {
 
   const decryptedBuffer = await decryptFile(fileinfo.value.encryptKey, ivBuffer!, payloadBuffer!)
 
-  return URL.createObjectURL(new Blob([decryptedBuffer], { type: type }))
+  return URL.createObjectURL(new File([decryptedBuffer], fileName, { type: contentType }))
 }
 
 const handleDownload = () => {
@@ -146,7 +148,11 @@ onBeforeMount(() => {
           confirmButtonType: 'danger',
         })
           .then(() => {
-            _downloadFile(fileinfo.value.url).then((url) => {
+            _downloadFile(
+              fileinfo.value.url,
+              fileinfo.value.title,
+              fileinfo.value.contentType,
+            ).then((url) => {
               blobUrl.value = url
               status.value.loading = false
             })
@@ -155,10 +161,12 @@ onBeforeMount(() => {
             router.push({ name: 'home' })
           })
       } else {
-        _downloadFile(fileinfo.value.url).then((url) => {
-          blobUrl.value = url
-          status.value.loading = false
-        })
+        _downloadFile(fileinfo.value.url, fileinfo.value.title, fileinfo.value.contentType).then(
+          (url) => {
+            blobUrl.value = url
+            status.value.loading = false
+          },
+        )
       }
     })
     .catch((e) => {
@@ -167,6 +175,10 @@ onBeforeMount(() => {
       status.value.errorMsg = e.message
       _errorMessage(e.message)
     })
+})
+
+onBeforeUnmount(() => {
+  URL.revokeObjectURL(blobUrl.value)
 })
 </script>
 
