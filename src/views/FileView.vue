@@ -28,7 +28,7 @@ const status = ref({
   error: false,
   errorMsg: '',
 })
-const fileinfo = ref({
+const fileInfo = ref({
   fileId: 0,
   fileUuid: '',
   userUuid: '',
@@ -83,7 +83,7 @@ const _loadFileInfo = async () => {
     throw new Error('数据格式错误')
   }
 
-  fileinfo.value = {
+  fileInfo.value = {
     fileId: body.file.id,
     fileUuid: body.file.file_uuid,
     userUuid: body.file.user_uuid,
@@ -109,7 +109,7 @@ const _downloadFile = async (
 
   const [ivBuffer, payloadBuffer] = splitBuffer(encryptedBuffer)
 
-  const decryptedBuffer = await decryptFile(fileinfo.value.encryptKey, ivBuffer!, payloadBuffer!)
+  const decryptedBuffer = await decryptFile(fileInfo.value.encryptKey, ivBuffer!, payloadBuffer!)
 
   return URL.createObjectURL(new File([decryptedBuffer], fileName, { type: contentType }))
 }
@@ -121,7 +121,7 @@ const handleDownload = () => {
 onBeforeMount(() => {
   _loadFileInfo()
     .then(() => {
-      status.value.hidden = !(fileinfo.value.flag === 0)
+      status.value.hidden = !(fileInfo.value.flag === 0)
 
       if (status.value.hidden) {
         const tags: VNode[] = [
@@ -132,7 +132,7 @@ onBeforeMount(() => {
             { bit: 4, label: '血腥' },
             { bit: 8, label: '暴力' },
           ].flatMap(({ bit, label }) => {
-            return (fileinfo.value.flag & bit) === bit
+            return (fileInfo.value.flag & bit) === bit
               ? h(ElTag, { class: 'mr-2', type: 'danger', effect: 'dark' }, () => label)
               : []
           }),
@@ -149,9 +149,9 @@ onBeforeMount(() => {
         })
           .then(() => {
             _downloadFile(
-              fileinfo.value.url,
-              fileinfo.value.title,
-              fileinfo.value.contentType,
+              fileInfo.value.url,
+              fileInfo.value.title,
+              fileInfo.value.contentType,
             ).then((url) => {
               blobUrl.value = url
               status.value.loading = false
@@ -161,7 +161,7 @@ onBeforeMount(() => {
             router.push({ name: 'home' })
           })
       } else {
-        _downloadFile(fileinfo.value.url, fileinfo.value.title, fileinfo.value.contentType).then(
+        _downloadFile(fileInfo.value.url, fileInfo.value.title, fileInfo.value.contentType).then(
           (url) => {
             blobUrl.value = url
             status.value.loading = false
@@ -187,13 +187,13 @@ onBeforeUnmount(() => {
     <div class="flex items-center">
       <el-descriptions class="min-w-1/2">
         <template #title>
-          <p class="text-3xl">{{ fileinfo.title }}</p>
+          <p class="text-3xl">{{ fileInfo.title }}</p>
         </template>
         <el-descriptions-item label="文件大小">{{
-          formatBytes(fileinfo.size)
-        }}</el-descriptions-item>
+            formatBytes(fileInfo.size)
+          }}</el-descriptions-item>
         <el-descriptions-item label="上传用户">不告诉你</el-descriptions-item>
-        <el-descriptions-item label="上传时间">{{ fileinfo.createTime }}</el-descriptions-item>
+        <el-descriptions-item label="上传时间">{{ fileInfo.createTime }}</el-descriptions-item>
       </el-descriptions>
 
       <el-button class="ml-auto" type="primary" :loading="status.loading" @click="handleDownload"
