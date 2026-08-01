@@ -81,6 +81,7 @@ const handlePublish = () => {
 
   fileApi
     .upload(file.value!, userStore.token)
+    // 上传文件
     .then(async (response) => {
       const body = await response.json()
       if (!response.ok) {
@@ -120,8 +121,6 @@ const handlePublish = () => {
       return body
     })
     .then((body) => {
-      fake.end()
-
       ElMessage({
         message: '文件上传成功，5秒后跳转至详情页',
         type: 'success',
@@ -135,7 +134,9 @@ const handlePublish = () => {
       errorMessage(`文件上传失败, ${e}`)
       onUpload.value = false
     })
-    .finally(() => {})
+    .finally(() => {
+      fake.end()
+    })
 }
 </script>
 
