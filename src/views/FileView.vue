@@ -190,8 +190,8 @@ onBeforeUnmount(() => {
           <p class="text-3xl">{{ fileInfo.title }}</p>
         </template>
         <el-descriptions-item label="文件大小">{{
-            formatBytes(fileInfo.size)
-          }}</el-descriptions-item>
+          formatBytes(fileInfo.size)
+        }}</el-descriptions-item>
         <el-descriptions-item label="上传用户">不告诉你</el-descriptions-item>
         <el-descriptions-item label="上传时间">{{ fileInfo.createTime }}</el-descriptions-item>
       </el-descriptions>

@@ -11,8 +11,6 @@ const userStore = useUserStore()
 const userApi = new UserApi(import.meta.env.VITE_SANDCASTLE_API as string)
 
 onBeforeMount(() => {
-  console.log('token: ' + userStore.token)
-
   userApi
     .verifyToken(userStore.token)
     .then((response) => {
@@ -22,6 +20,9 @@ onBeforeMount(() => {
       if (body?.user?.uuid !== userStore.userInfo?.uuid) {
         userStore.$reset()
       }
+    })
+    .catch(() => {
+      userStore.$reset()
     })
 })
 
