@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { ElButton, ElLink, ElSpace, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus'
 
 import { useUserStore } from '@/stores/user'
 
-const userSotre = useUserStore()
+const router = useRouter()
+const userStore = useUserStore()
+
+const handleLogOut = () => {
+  userStore.$reset()
+  router.push('/')
+}
 </script>
 
 <template>
@@ -12,11 +18,11 @@ const userSotre = useUserStore()
     <div class="logo">Sandcastle</div>
 
     <div class="ml-auto">
-      <el-dropdown class="flex items-center" v-if="userSotre.isLogin">
-        <div class="text-base">欢迎, {{ userSotre.userInfo?.username }}</div>
+      <el-dropdown class="flex items-center" v-if="userStore.isLogin">
+        <div class="text-base">欢迎, {{ userStore.userInfo?.username }}</div>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item>退出登录 </el-dropdown-item>
+            <el-dropdown-item @click="handleLogOut()">退出登录 </el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
