@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 const successMessage = (message: string) => {
   ElMessage({
     message: message,
-    type: 'warning',
+    type: 'success',
     duration: 5 * 1000,
     showClose: true,
   })
