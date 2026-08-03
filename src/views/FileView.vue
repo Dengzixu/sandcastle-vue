@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import {
   ElButton,
+  ElButtonGroup,
   ElDescriptions,
   ElDescriptionsItem,
   ElDivider,
@@ -20,6 +21,7 @@ import FileApi from '@/api/FileApi'
 import { decryptFile, fetchFile, splitBuffer } from '@/utils/loadFile'
 import { formatBytes } from '@/utils/formatBytes'
 import { useUserStore } from '@/stores/user'
+import { successMessage } from '@/utils/message.ts'
 
 const blobUrl = ref('')
 const status = ref({
@@ -118,8 +120,14 @@ const handleDownload = () => {
   const tempAElement = document.createElement('a')
 
   tempAElement.href = blobUrl.value
-  tempAElement.download = fileInfo.value.title;
+  tempAElement.download = fileInfo.value.title
   tempAElement.click()
+}
+
+const handleCopy = () => {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    successMessage('复制成功')
+  })
 }
 
 onBeforeMount(() => {
@@ -200,9 +208,13 @@ onBeforeUnmount(() => {
         <el-descriptions-item label="上传时间">{{ fileInfo.createTime }}</el-descriptions-item>
       </el-descriptions>
 
-      <el-button class="ml-auto" type="primary" :loading="status.loading" @click="handleDownload"
-        >下载文件</el-button
-      >
+      <el-button-group class="ml-auto">
+        <el-button type="primary" :loading="status.loading" @click="handleDownload">
+          下载文件
+        </el-button>
+
+        <el-button :loading="status.loading" @click="handleCopy">复制链接</el-button>
+      </el-button-group>
     </div>
 
     <el-divider />
