@@ -120,9 +120,10 @@ const onSubmit = () => {
 
       <el-form-item>
         <el-button
+          class="w-full"
           type="primary"
           @click="onSubmit"
-          :disabled="status.loading"
+          :disabled="status.loading || turnstileToken=== ''"
           :loading="status.loading"
           >登录</el-button
         >
