@@ -115,7 +115,11 @@ const _downloadFile = async (
 }
 
 const handleDownload = () => {
-  window.open(blobUrl.value)
+  const tempAElement = document.createElement('a')
+
+  tempAElement.href = blobUrl.value
+  tempAElement.download = fileInfo.value.title;
+  tempAElement.click()
 }
 
 onBeforeMount(() => {
