@@ -123,7 +123,7 @@ const onSubmit = () => {
           class="w-full"
           type="primary"
           @click="onSubmit"
-          :disabled="status.loading || turnstileToken=== ''"
+          :disabled="status.loading || turnstileToken === ''"
           :loading="status.loading"
           >登录</el-button
         >
