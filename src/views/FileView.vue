@@ -74,7 +74,7 @@ const _loadFileInfo = async () => {
 
   if (!response.ok) {
     switch (response.status) {
-      case 400:
+      case 404:
         throw new Error('文件资源不存在')
       default:
         throw new Error(body.message)
