@@ -15,7 +15,6 @@ import {
   ElOption,
   ElProgress,
   ElSelect,
-  ElSpace,
 } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { FakeProgress } from '@/utils/FakeProgress'
@@ -143,59 +142,78 @@ const handlePublish = () => {
 <template>
   <main>
     <div class="container mx-auto">
-      <p class="mt-[10%] py-10 text-center text-4xl">Sandcastle 临时文件分享</p>
+      <p class="mt-[10vh] mb-8 text-center text-3xl font-semibold tracking-tight sm:text-4xl">
+        Sandcastle 临时文件分享
+      </p>
+      <el-card class="mx-auto w-full max-w-3xl rounded-xl" shadow="hover">
+        <div class="py-6 text-center">
+          <p class="mb-4 text-base text-gray-700 sm:text-lg">
+            将文件拖入区域，或选择要
+            <el-button @click="handleChooseFile" class="font-bold">
+              <span class="icon-[material-symbols--upload] mr-1"></span>
+              上传
+            </el-button>
+            的文件
+          </p>
 
-      <el-card class="mx-auto w-[80%]" shadow="hover" dsiable>
-        <p class="py-6 text-center text-lg">
-          将文件拖入，或者选择要
-          <el-button @click="handleChooseFile">
-            <span class="icon-[material-symbols--upload]"></span> 上传</el-button
-          >
-          的文件
-        </p>
+          <div id="FHfcfas"></div>
 
-        <div id="FHfcfas"></div>
+          <input id="choose-file" class="hidden" type="file" @change="handleChange" />
 
-        <input id="choose-file" class="hidden" type="file" @change="handleChange" />
-
-        <el-divider border-style="dashed" />
+          <el-divider border-style="dashed" />
+        </div>
 
         <el-form :model="formValue" :disabled="onUpload">
-          <el-space size="large" wrap>
-            <el-form-item label="特殊标记" prop="flag">
-              <el-checkbox-group v-model="formValue.flags">
-                <el-checkbox label="色情" :value="1" />
-                <el-checkbox label="敏感" :value="2" />
-                <el-checkbox label="血腥" :value="4" />
-                <el-checkbox label="暴力" :value="8" />
+          <div class="space-y-4 sm:space-y-6">
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-700">安全设置（可多选）</label>
+              <el-checkbox-group v-model="formValue.flags" class="flex flex-wrap gap-3">
+                <el-checkbox label="1"> 色情 </el-checkbox>
+                <el-checkbox label="2"> 敏感 </el-checkbox>
+                <el-checkbox label="4"> 血腥 </el-checkbox>
+                <el-checkbox label="8"> 暴力 </el-checkbox>
               </el-checkbox-group>
-            </el-form-item>
+            </div>
 
-            <el-form-item label="有效期">
-              <el-select class="min-w-48" placeholder="1" v-model="formValue.validityPeriod">
+            <!-- 有效期 -->
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-700">有效期</label>
+              <el-select
+                v-model="formValue.validityPeriod"
+                placeholder="选择有效期"
+                class="w-full sm:w-48"
+              >
                 <el-option label="1 天" :value="1" />
                 <el-option label="3 天" :value="3" />
                 <el-option label="7 天" :value="7" />
               </el-select>
-            </el-form-item>
+            </div>
 
+            <!--            密码暂时不可用-->
             <el-form-item label="密码" v-if="false">
               <el-input type="password" v-model="formValue.password" />
             </el-form-item>
 
-            <el-form-item class="ml-auto">
+            <div class="mt-2 flex">
               <el-button
                 type="primary"
                 @click="handlePublish"
                 :disabled="onUpload"
                 :loading="onUpload"
-                >发布</el-button
+                class="ml-auto w-full sm:w-auto"
               >
-            </el-form-item>
-          </el-space>
+                {{ onUpload ? '正在发布...' : '发布文件' }}
+              </el-button>
+            </div>
+          </div>
         </el-form>
 
-        <el-progress :percentage="Math.floor(fake.progress * 100)" v-if="onUpload" />
+        <!-- 上传进度条：限制最大宽度 -->
+        <el-progress
+          v-if="onUpload"
+          :percentage="Math.floor(fake.progress * 100)"
+          class="mt-4 max-w-full"
+        />
       </el-card>
     </div>
   </main>

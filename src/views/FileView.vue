@@ -196,27 +196,34 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="container mx-auto">
-    <div class="flex items-center">
-      <el-descriptions class="min-w-1/2">
+    <div class="mb-6 flex flex-col items-start gap-4 md:flex-row md:items-center">
+      <el-descriptions class="w-full md:w-1/2" :column="2" size="small" border>
         <template #title>
-          <p class="text-3xl">{{ fileInfo.title }}</p>
+          <!-- 优化标题：允许换行、自适应截断；mobile 多行，desktop 单行省略 -->
+          <span
+            class="mb-1 block max-w-full overflow-hidden text-lg leading-tight text-ellipsis whitespace-normal sm:text-xl sm:whitespace-nowrap md:text-2xl"
+          >
+            {{ fileInfo.title }}
+          </span>
         </template>
-        <el-descriptions-item label="文件大小">{{
-          formatBytes(fileInfo.size)
-        }}</el-descriptions-item>
-        <el-descriptions-item label="上传用户">不告诉你</el-descriptions-item>
-        <el-descriptions-item label="上传时间">{{ fileInfo.createTime }}</el-descriptions-item>
+
+        <!-- 尺寸 & 时间各占一行（column=2，每项 span=1），确保对齐 -->
+        <el-descriptions-item label="文件大小">
+          {{ formatBytes(fileInfo.size) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="上传时间">
+          {{ fileInfo.createTime }}
+        </el-descriptions-item>
+        <el-descriptions-item label="上传用户"> 已隐藏 </el-descriptions-item>
       </el-descriptions>
 
       <el-button-group class="ml-auto">
+        <el-button :loading="status.loading" @click="handleCopy">复制链接</el-button>
         <el-button type="primary" :loading="status.loading" @click="handleDownload">
           下载文件
         </el-button>
-
-        <el-button :loading="status.loading" @click="handleCopy">复制链接</el-button>
       </el-button-group>
     </div>
-
     <el-divider />
 
     <div class="flex justify-center">
