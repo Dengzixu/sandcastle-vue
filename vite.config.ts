@@ -13,4 +13,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        entryFileNames: '[name].js',
+        chunkFileNames: 'chunks/[hash:16].js',
+        assetFileNames: 'assets/[name]-[hash:16][extname]',
+        hashCharacters: 'base36',
+      },
+    },
+  },
 })
