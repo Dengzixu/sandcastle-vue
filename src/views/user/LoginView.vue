@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { ComponentInstance } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElButton, ElForm, ElFormItem, ElInput, ElMessage } from 'element-plus'
+import { ElButton, ElForm, ElFormItem, ElInput } from 'element-plus'
 import VueTurnstile from 'vue-turnstile'
 
 import { useUserStore } from '@/stores/user'
 import UserApi from '@/api/UserApi'
-import { errorMessage, warningMessage } from '@/utils/message'
+import { errorMessage, successMessage, warningMessage } from '@/utils/message'
 
-const siteKey = import.meta.env.VITE_CF_TURNSTILE_SITE_KEY as string
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_CF_TURNSTILE_SITE_KEY as string
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -16,10 +17,13 @@ const userApi = new UserApi(import.meta.env.VITE_SANDCASTLE_API as string)
 
 const turnstileToken = ref('')
 const requestInteractive = ref(false)
+const turnstileRef = ref<ComponentInstance<typeof VueTurnstile> | null>(null)
+
 const formValue = ref({
   email: '',
   password: '',
 })
+
 const formError = ref({
   email: '',
   password: '',
@@ -58,6 +62,8 @@ const onSubmit = () => {
             formError.value.email = body.error_fields?.email
             formError.value.password = body.error_fields?.password
             throw new Error('输入的数据不正确')
+          case -1700_0001:
+            throw new Error('人机校验失败，请刷新页面后再试')
           default:
             throw new Error(body.detail ? body.detail : '未知错误')
         }
@@ -68,6 +74,7 @@ const onSubmit = () => {
     .then((body) => {
       userStore.token = body?.token
 
+      // 存储 User 信息
       userStore.$patch({
         userInfo: {
           id: body?.user?.id,
@@ -77,18 +84,16 @@ const onSubmit = () => {
         },
       })
 
+      // 持久化
       userStore.persistence()
 
-      ElMessage({
-        message: '登录成功',
-        type: 'success',
-        onClose: () => {
-          router.push({ name: 'home' })
-        },
+      successMessage('登录成功', () => {
+        router.push({ name: 'home' })
       })
     })
     .catch((e) => {
       status.value.loading = false
+      turnstileRef.value?.reset()
       errorMessage(`登录失败，${e.message}`)
     })
 }
@@ -111,7 +116,8 @@ const onSubmit = () => {
 
       <el-form-item label="人机验证" v-show="requestInteractive">
         <vue-turnstile
-          :site-key="siteKey"
+          ref="turnstileRef"
+          :site-key="TURNSTILE_SITE_KEY"
           size="flexible"
           v-model="turnstileToken"
           @before-interactive="requestInteractive = true"
@@ -125,8 +131,9 @@ const onSubmit = () => {
           @click="onSubmit"
           :disabled="status.loading || turnstileToken === ''"
           :loading="status.loading"
-          >登录</el-button
         >
+          登录
+        </el-button>
       </el-form-item>
     </el-form>
   </div>

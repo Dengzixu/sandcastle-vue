@@ -1,11 +1,12 @@
 import { ElMessage } from 'element-plus'
 
-const successMessage = (message: string) => {
+const successMessage = (message: string, onClose?: () => void) => {
   ElMessage({
     message: message,
     type: 'success',
     duration: 5 * 1000,
     showClose: true,
+    onClose: onClose,
   })
 }
 
