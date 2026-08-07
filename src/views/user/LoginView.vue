@@ -7,6 +7,7 @@ import VueTurnstile from 'vue-turnstile'
 
 import { useUserStore } from '@/stores/user'
 import UserApi from '@/api/UserApi'
+import type { Login } from '@/api/UserApi'
 import { errorMessage, successMessage, warningMessage } from '@/utils/message'
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_CF_TURNSTILE_SITE_KEY as string
@@ -19,7 +20,7 @@ const turnstileToken = ref('')
 const requestInteractive = ref(false)
 const turnstileRef = ref<ComponentInstance<typeof VueTurnstile> | null>(null)
 
-const formValue = ref({
+const formValue = ref<Login>({
   email: '',
   password: '',
 })
@@ -46,13 +47,7 @@ const onSubmit = () => {
   }
 
   userApi
-    .login(
-      {
-        email: formValue.value.email,
-        password: formValue.value.password,
-      },
-      turnstileToken.value,
-    )
+    .login(formValue.value, turnstileToken.value)
     .then(async (response) => {
       const body = await response.json()
 
