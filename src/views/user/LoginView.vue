@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElButton, ElForm, ElFormItem, ElInput, ElMessage } from 'element-plus'
 import VueTurnstile from 'vue-turnstile'
@@ -16,11 +16,11 @@ const userApi = new UserApi(import.meta.env.VITE_SANDCASTLE_API as string)
 
 const turnstileToken = ref('')
 const requestInteractive = ref(false)
-const formValue = reactive({
+const formValue = ref({
   email: '',
   password: '',
 })
-const formError = reactive({
+const formError = ref({
   email: '',
   password: '',
 })
@@ -32,8 +32,8 @@ const status = ref({
 const onSubmit = () => {
   status.value.loading = true
 
-  formError.email = ''
-  formError.password = ''
+  formError.value.email = ''
+  formError.value.password = ''
 
   if ('' === turnstileToken.value) {
     warningMessage('请完成人机验证')
@@ -44,8 +44,8 @@ const onSubmit = () => {
   userApi
     .login(
       {
-        email: formValue.email,
-        password: formValue.password,
+        email: formValue.value.email,
+        password: formValue.value.password,
       },
       turnstileToken.value,
     )
@@ -55,8 +55,8 @@ const onSubmit = () => {
       if (!response.ok) {
         switch (body?.error_code) {
           case -1800_0001:
-            formError.email = body.error_fields?.email
-            formError.password = body.error_fields?.password
+            formError.value.email = body.error_fields?.email
+            formError.value.password = body.error_fields?.password
             throw new Error('输入的数据不正确')
           default:
             throw new Error(body.detail ? body.detail : '未知错误')
