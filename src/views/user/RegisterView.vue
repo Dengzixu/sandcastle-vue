@@ -13,7 +13,6 @@ import { errorMessage, successMessage, warningMessage } from '@/utils/message'
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_CF_TURNSTILE_SITE_KEY as string
 
 const router = useRouter()
-const userStore = useUserStore()
 const userApi = new UserApi(import.meta.env.VITE_SANDCASTLE_API as string)
 
 const turnstileToken = ref('')
@@ -98,6 +97,7 @@ const onSubmit = () => {
 
       <el-form-item label="人机验证" v-show="requestInteractive">
         <vue-turnstile
+          class="w-full"
           ref="turnstileRef"
           :site-key="TURNSTILE_SITE_KEY"
           size="flexible"

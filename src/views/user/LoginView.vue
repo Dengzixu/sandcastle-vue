@@ -111,6 +111,7 @@ const onSubmit = () => {
 
       <el-form-item label="人机验证" v-show="requestInteractive">
         <vue-turnstile
+          class="w-full"
           ref="turnstileRef"
           :site-key="TURNSTILE_SITE_KEY"
           size="flexible"
