@@ -5,7 +5,6 @@ import { useRouter } from 'vue-router'
 import { ElButton, ElForm, ElFormItem, ElInput } from 'element-plus'
 import VueTurnstile from 'vue-turnstile'
 
-import { useUserStore } from '@/stores/user'
 import UserApi from '@/api/UserApi'
 import type { Register } from '@/api/UserApi'
 import { errorMessage, successMessage, warningMessage } from '@/utils/message'
