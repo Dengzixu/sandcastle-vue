@@ -11,19 +11,21 @@ const userStore = useUserStore()
 const userApi = new UserApi(import.meta.env.VITE_SANDCASTLE_API as string)
 
 onBeforeMount(() => {
-  userApi
-    .verifyToken(userStore.token)
-    .then((response) => {
-      return response.json()
-    })
-    .then((body) => {
-      if (body?.user?.uuid !== userStore.userInfo?.uuid) {
+  if (userStore.isLogin) {
+    userApi
+      .verifyToken(userStore.token)
+      .then((response) => {
+        return response.json()
+      })
+      .then((body) => {
+        if (body?.user?.uuid !== userStore.userInfo?.uuid) {
+          userStore.$reset()
+        }
+      })
+      .catch(() => {
         userStore.$reset()
-      }
-    })
-    .catch(() => {
-      userStore.$reset()
-    })
+      })
+  }
 })
 
 import NavbarComponent from './components/NavbarComponent.vue'
