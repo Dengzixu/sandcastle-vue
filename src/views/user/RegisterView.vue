@@ -22,12 +22,14 @@ const formValue = ref<Register>({
   username: '',
   email: '',
   password: '',
+  active_code: '',
 })
 
 const formError = ref({
   username: '',
   email: '',
   password: '',
+  active_code: '',
 })
 
 const status = ref({
@@ -92,6 +94,10 @@ const onSubmit = () => {
 
       <el-form-item label="密码" :error="formError.password" prop="password">
         <el-input show-password type="password" v-model="formValue.password" />
+      </el-form-item>
+
+      <el-form-item label="邀请码" :error="formError.active_code" prop="active_code">
+        <el-input v-model="formValue.active_code" />
       </el-form-item>
 
       <el-form-item label="人机验证" v-show="requestInteractive">

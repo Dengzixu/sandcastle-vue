@@ -23,4 +23,5 @@ export interface Register {
   username: string
   email: string
   password: string
+  active_code: string
 }
