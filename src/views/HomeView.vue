@@ -21,6 +21,8 @@ import { FakeProgress } from '@/utils/FakeProgress'
 import FileApi from '@/api/FileApi'
 import { errorMessage } from '@/utils/message'
 
+const siteTitle = import.meta.env.VITE_SITE_TITLE
+
 const router = useRouter()
 const userStore = useUserStore()
 const fileApi = new FileApi(import.meta.env.VITE_SANDCASTLE_API as string)
@@ -143,7 +145,7 @@ const handlePublish = () => {
   <main>
     <div class="container mx-auto">
       <p class="mt-[10vh] mb-8 text-center text-3xl font-semibold tracking-tight sm:text-4xl">
-        Sandcastle 临时文件分享
+        {{ siteTitle }} 临时文件分享
       </p>
       <el-card class="mx-auto w-full max-w-3xl rounded-xl" shadow="hover">
         <div class="py-6 text-center">
@@ -166,7 +168,7 @@ const handlePublish = () => {
         <el-form :model="formValue" :disabled="onUpload">
           <div class="space-y-4 sm:space-y-6">
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-700">安全设置（可多选）</label>
+              <label class="mb-2 block text-sm font-medium text-gray-700">安全设置</label>
               <el-checkbox-group v-model="formValue.flags" class="flex flex-wrap gap-3">
                 <el-checkbox label="1"> 色情 </el-checkbox>
                 <el-checkbox label="2"> 敏感 </el-checkbox>

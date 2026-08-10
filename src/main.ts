@@ -21,4 +21,6 @@ userStore.$subscribe(() => {
   userStore.persistence()
 })
 
-app.mount('#sandcastle-app')
+const rootContainerID = `#${import.meta.env.VITE_SITE_TITLE}-app`
+
+app.mount(rootContainerID)

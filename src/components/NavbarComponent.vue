@@ -4,6 +4,8 @@ import { ElButton, ElLink, ElSpace, ElDropdown, ElDropdownItem, ElDropdownMenu }
 
 import { useUserStore } from '@/stores/user'
 
+const siteTitle = import.meta.env.VITE_SITE_TITLE
+
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -15,7 +17,7 @@ const handleLogOut = () => {
 
 <template>
   <div class="navbar-container flex min-h-12 items-center border-b border-gray-300">
-    <div class="logo">Sandcastle</div>
+    <div class="logo">{{ siteTitle }}</div>
 
     <div class="ml-auto">
       <el-dropdown class="flex items-center" v-if="userStore.isLogin">
