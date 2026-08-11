@@ -52,6 +52,10 @@ const _loadFileList = async () => {
   console.log(body.file_list)
 }
 
+const handleBack = () => {
+  history.back()
+}
+
 onBeforeMount(() => {
   _loadFileList().catch((e) => {
     errorMessage(e.message)
@@ -61,10 +65,7 @@ onBeforeMount(() => {
 
 <template>
   <div class="container mx-auto">
-    <el-page-header>
-      <template #title>
-        <span>返回</span>
-      </template>
+    <el-page-header @back="handleBack">
       <template #content>
         <span>我的文件</span>
       </template>
@@ -74,7 +75,7 @@ onBeforeMount(() => {
 
     <el-table how-overflow-tooltip :data="fileListRef">
       <el-table-column type="index" label="#" width="50" />
-      <el-table-column prop="file_uuid" label="ID">
+      <el-table-column prop="file_uuid" label="ID" min-width="150">
         <template #default="scope">
           <el-link
             underline="always"
