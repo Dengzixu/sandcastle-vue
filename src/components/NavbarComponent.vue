@@ -24,7 +24,8 @@ const handleLogOut = () => {
         <div class="text-base">欢迎, {{ userStore.userInfo?.username }}</div>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item @click="handleLogOut()">退出登录 </el-dropdown-item>
+            <el-dropdown-item @click="router.push('/file/list')">我的文件</el-dropdown-item>
+            <el-dropdown-item divided @click="handleLogOut()">退出登录 </el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>

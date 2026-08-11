@@ -20,6 +20,10 @@ export default class FileApi extends Api {
   public getById(fileId: number, token?: string) {
     return super._get('/file/api/v1/id/' + fileId, token)
   }
+
+  public list(token: string) {
+    return super._get('/file/api/v1/list', token)
+  }
 }
 
 export interface publish {
