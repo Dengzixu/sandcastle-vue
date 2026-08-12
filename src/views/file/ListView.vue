@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import {
+  ElButton,
   ElDivider,
   ElPageHeader,
   ElTable,
@@ -26,6 +27,7 @@ const fileListRef = ref<
     flag: number
     title: string
     create_time: string
+    expire_time: string
   }[]
 >([])
 
@@ -50,6 +52,7 @@ const _loadFileList = async () => {
       flag: file.flag,
       title: file.title,
       create_time: file.create_time,
+      expire_time: file.expire_time,
     })
   })
 }
@@ -81,7 +84,7 @@ onBeforeMount(() => {
 
     <el-table v-loading="status.loading" :data="fileListRef">
       <el-table-column type="index" label="#" width="50" />
-      <el-table-column prop="file_uuid" label="ID" min-width="150">
+      <el-table-column prop="file_uuid" label="ID" min-width="160">
         <template #default="scope">
           <el-link
             underline="always"
@@ -94,7 +97,8 @@ onBeforeMount(() => {
         </template>
       </el-table-column>
       <el-table-column prop="title" label="文件名" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="create_time" label="上传时间" min-width="200" />
+      <el-table-column prop="create_time" label="上传时间" width="180" />
+      <el-table-column prop="expire_time" label="过期时间" width="180" />
       <el-table-column label="特殊标记" min-width="240">
         <template #default="scope">
           <el-space>
@@ -106,6 +110,11 @@ onBeforeMount(() => {
           </el-space>
         </template>
       </el-table-column>
+<!--      <el-table-column label="操作">-->
+<!--        <template #default="scope">-->
+<!--          <el-button type="danger" size="small" disabled>删除</el-button>-->
+<!--        </template>-->
+<!--      </el-table-column>-->
     </el-table>
   </div>
 </template>

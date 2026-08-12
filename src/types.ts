@@ -16,4 +16,5 @@ export interface File {
   content_type: string
   type: string
   create_time: string
+  expire_time: string
 }
