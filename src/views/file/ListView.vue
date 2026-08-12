@@ -29,6 +29,10 @@ const fileListRef = ref<
   }[]
 >([])
 
+const status = ref({
+  loading: true,
+})
+
 const _loadFileList = async () => {
   const response = await fileApi.list(userStore.token)
 
@@ -48,8 +52,6 @@ const _loadFileList = async () => {
       create_time: file.create_time,
     })
   })
-
-  console.log(body.file_list)
 }
 
 const handleBack = () => {
@@ -57,9 +59,13 @@ const handleBack = () => {
 }
 
 onBeforeMount(() => {
-  _loadFileList().catch((e) => {
-    errorMessage(e.message)
-  })
+  _loadFileList()
+    .catch((e) => {
+      errorMessage(e.message)
+    })
+    .finally(() => {
+      status.value.loading = false
+    })
 })
 </script>
 
@@ -73,7 +79,7 @@ onBeforeMount(() => {
 
     <el-divider />
 
-    <el-table how-overflow-tooltip :data="fileListRef">
+    <el-table v-loading="status.loading" :data="fileListRef">
       <el-table-column type="index" label="#" width="50" />
       <el-table-column prop="file_uuid" label="ID" min-width="150">
         <template #default="scope">
