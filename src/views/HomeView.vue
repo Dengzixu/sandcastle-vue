@@ -144,7 +144,9 @@ const handlePublish = () => {
 <template>
   <main>
     <div class="container mx-auto">
-      <p class="mt-[10vh] mb-8 text-center text-3xl font-semibold tracking-tight sm:text-4xl">
+      <p
+        class="mt-[5vh] mb-8 text-center text-3xl font-semibold tracking-tight sm:mt-[10vh] sm:text-4xl"
+      >
         {{ siteTitle }} 临时文件分享
       </p>
       <el-card class="mx-auto w-full max-w-3xl rounded-xl" shadow="hover">
