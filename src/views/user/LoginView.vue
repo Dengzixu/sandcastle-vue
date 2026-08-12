@@ -96,7 +96,7 @@ const onSubmit = () => {
 
 <template>
   <div class="login-form flex justify-center pt-[5%]">
-    <el-form class="min-w-lg" label-position="top" :model="formValue">
+    <el-form class="min-w-xs sm:min-w-lg" label-position="top" :model="formValue">
       <div class="px-6">
         <h1 class="text-center text-2xl">登录</h1>
       </div>
