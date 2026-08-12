@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user.ts'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,8 +28,22 @@ const router = createRouter({
       path: '/file/list',
       name: 'file-list',
       component: () => import('@/views/file/ListView.vue'),
+      meta: {
+        requireLogin: true,
+      },
     },
   ],
+})
+
+router.beforeEach((to, from) => {
+  const userStore = useUserStore()
+  if (to.meta.requireLogin && !userStore.isLogin) {
+    return {
+      path: '/login',
+      // 保存我们所在的位置，以便以后再来
+      query: { redirect: to.fullPath },
+    }
+  }
 })
 
 export default router

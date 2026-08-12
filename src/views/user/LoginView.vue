@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { ComponentInstance } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElButton, ElForm, ElFormItem, ElInput } from 'element-plus'
 import VueTurnstile from 'vue-turnstile'
 
@@ -12,6 +12,7 @@ import { errorMessage, successMessage, warningMessage } from '@/utils/message'
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_CF_TURNSTILE_SITE_KEY as string
 
+const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const userApi = new UserApi(import.meta.env.VITE_SANDCASTLE_API as string)
@@ -82,9 +83,15 @@ const onSubmit = () => {
       // 持久化
       userStore.persistence()
 
-      successMessage('登录成功', () => {
-        router.push({ name: 'home' })
-      })
+      if (route.query.redirect) {
+        successMessage('登录成功，即将跳转至先前页面', () => {
+          router.push({ path: route.query.redirect as string })
+        })
+      } else {
+        successMessage('登录成功，即将跳转至首页', () => {
+          router.push({ name: 'home' })
+        })
+      }
     })
     .catch((e) => {
       status.value.loading = false
