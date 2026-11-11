@@ -74,10 +74,13 @@ const _loadFileInfo = async () => {
 
   if (!response.ok) {
     switch (response.status) {
+      case 401:
+        // 登录态失效，由统一钩子处理跳转
+        throw new Error('登录已过期，请重新登录')
       case 404:
         throw new Error('文件资源不存在')
       default:
-        throw new Error(body.message)
+        throw new Error(body?.message ?? '文件加载失败')
     }
   }
 
@@ -159,7 +162,12 @@ onBeforeMount(async () => {
     status.value.loading = false
     status.value.error = true
     status.value.errorMsg = e instanceof Error ? e.message : String(e)
-    _errorMessage(status.value.errorMsg)
+
+    // 登录失效已由统一钩子提示并跳转，这里不再重复弹错
+    if (userStore.isLogin) {
+      _errorMessage(status.value.errorMsg)
+    }
+
     return
   }
 

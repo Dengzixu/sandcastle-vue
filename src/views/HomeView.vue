@@ -83,14 +83,16 @@ const handlePublish = () => {
     // 上传文件
     .then(async (response) => {
       const body = await response.json()
-      if (!response.ok) {
-        switch (body?.code) {
-          case -1000_1000:
-            userStore.$reset()
-          default:
-            throw new Error(body?.detail)
-        }
+
+      // 401 已由 Api 层的统一钩子处理（清除登录态并跳转），这里只中断流程
+      if (response.status === 401) {
+        throw new Error('登录已过期')
       }
+
+      if (!response.ok) {
+        throw new Error(body?.detail ?? '文件上传失败')
+      }
+
       return body
     })
     .then((body) => {
@@ -108,13 +110,13 @@ const handlePublish = () => {
     })
     .then(async (response) => {
       const body = await response.json()
+
+      if (response.status === 401) {
+        throw new Error('登录已过期')
+      }
+
       if (!response.ok) {
-        switch (body?.code) {
-          case -1000_1000:
-            userStore.$reset()
-          default:
-            throw new Error(body?.detail)
-        }
+        throw new Error(body?.detail ?? '文件发布失败')
       }
 
       return body
@@ -130,8 +132,14 @@ const handlePublish = () => {
       })
     })
     .catch((e) => {
-      errorMessage(`文件上传失败, ${e}`)
       onUpload.value = false
+
+      // 登录失效已由统一钩子提示，这里不再重复弹错
+      if (!userStore.isLogin) {
+        return
+      }
+
+      errorMessage(`文件上传失败：${e instanceof Error ? e.message : e}`)
     })
     .finally(() => {
       fake.end()

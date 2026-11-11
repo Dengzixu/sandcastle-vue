@@ -37,6 +37,11 @@ const status = ref({
 const _loadFileList = async () => {
   const response = await fileApi.list(userStore.token)
 
+  // 401 已由统一钩子处理（清除登录态并跳转），这里不再解析错误体
+  if (response.status === 401) {
+    return
+  }
+
   const body = await response.json()
 
   if (!body.file_list) {
