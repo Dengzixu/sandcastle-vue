@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, h, onBeforeMount, onBeforeUnmount, ref, type VNode } from 'vue'
+import { computed, onBeforeMount, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import {
   ElButton,
   ElButtonGroup,
+  ElDialog,
   ElImage,
-  ElMessageBox,
   ElResult,
   ElSkeleton,
   ElSkeletonItem,
@@ -31,6 +31,10 @@ const status = ref({
 const previewError = ref('')
 // 元信息是否已就绪：未就绪时只渲染骨架，避免先闪一版空标题和 0 B 再被替换
 const infoReady = ref(false)
+
+// 敏感内容确认弹窗：用 Promise 包一层，让 onBeforeMount 能 await 用户的选择
+const showSensitiveDialog = ref(false)
+let resolveSensitive: ((confirmed: boolean) => void) | undefined
 
 /**
  * 携带 HTTP 状态码的加载错误。
@@ -264,37 +268,38 @@ const _loadBlob = async () => {
   }
 }
 
+const SENSITIVE_LABELS = [
+  { bit: 1, label: '色情' },
+  { bit: 2, label: '敏感' },
+  { bit: 4, label: '血腥' },
+  { bit: 8, label: '暴力' },
+] as const
+
+// 命中的敏感标记，用于弹窗里的标签列表
+const sensitiveLabels = computed(() =>
+  SENSITIVE_LABELS.filter(({ bit }) => (fileInfo.value.flag & bit) === bit).map(
+    ({ label }) => label,
+  ),
+)
+
 // 弹窗确认敏感内容；返回 true 表示用户选择继续
-const _confirmSensitiveContent = async (): Promise<boolean> => {
-  const tags: VNode[] = [
-    h('p', () => '文件上传者已声明文件可能存在以下内容：'),
-    ...[
-      { bit: 1, label: '色情' },
-      { bit: 2, label: '敏感' },
-      { bit: 4, label: '血腥' },
-      { bit: 8, label: '暴力' },
-    ].flatMap(({ bit, label }) => {
-      return (fileInfo.value.flag & bit) === bit
-        ? h(ElTag, { class: 'mr-2', type: 'danger', effect: 'dark' }, () => label)
-        : []
-    }),
-  ]
+const _confirmSensitiveContent = (): Promise<boolean> =>
+  new Promise((resolve) => {
+    resolveSensitive = resolve
+    showSensitiveDialog.value = true
+  })
 
-  try {
-    await ElMessageBox({
-      title: '敏感内容警告',
-      message: h('div', tags),
-      type: 'warning',
-      showCancelButton: true,
-      closeOnClickModal: false,
-      confirmButtonText: '继续',
-      confirmButtonType: 'danger',
-    })
+const finishSensitive = (confirmed: boolean) => {
+  resolveSensitive?.(confirmed)
+  resolveSensitive = undefined
+  showSensitiveDialog.value = false
+}
 
-    return true
-  } catch {
-    return false
-  }
+// ESC 关闭等同于"返回"，避免 Promise 悬空
+const handleSensitiveBeforeClose = (done: () => void) => {
+  resolveSensitive?.(false)
+  resolveSensitive = undefined
+  done()
 }
 
 onBeforeMount(async () => {
@@ -318,9 +323,13 @@ onBeforeMount(async () => {
   if (disposed) return
 
   if (hasSensitiveFlag.value && !(await _confirmSensitiveContent())) {
-    // 用户取消或关闭警告时返回首页
+    // 用户选择返回时回到首页
     status.value.loading = false
-    router.push({ name: 'home' })
+
+    if (!disposed) {
+      router.push({ name: 'home' })
+    }
+
     return
   }
 
@@ -329,6 +338,11 @@ onBeforeMount(async () => {
 
 onBeforeUnmount(() => {
   disposed = true
+
+  // 弹窗还开着就被卸载：放行挂起的 Promise，避免 await 永远不返回
+  resolveSensitive?.(false)
+  resolveSensitive = undefined
+
   pendingLoad?.abort()
   pendingLoad = undefined
 
@@ -448,5 +462,45 @@ onBeforeUnmount(() => {
         </div>
       </article>
     </template>
+
+    <!-- 敏感内容确认：只在文件带敏感标记时出现 -->
+    <el-dialog
+      v-model="showSensitiveDialog"
+      width="min(480px, 92vw)"
+      align-center
+      append-to-body
+      :show-close="false"
+      :close-on-click-modal="false"
+      :before-close="handleSensitiveBeforeClose"
+    >
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="icon-[material-symbols--warning-rounded] text-2xl text-amber-500"></span>
+          <h2 class="text-lg font-semibold text-gray-900">该文件可能包含敏感内容</h2>
+        </div>
+      </template>
+
+      <div class="space-y-3">
+        <p class="text-sm text-gray-700">上传者标记了以下内容：</p>
+
+        <div
+          v-if="sensitiveLabels.length > 0"
+          class="flex flex-wrap gap-2 rounded-lg bg-red-50 p-3"
+        >
+          <el-tag v-for="label in sensitiveLabels" :key="label" type="danger" effect="dark">
+            {{ label }}
+          </el-tag>
+        </div>
+
+        <p class="text-xs leading-relaxed text-gray-500">继续访问即表示你已知晓内容风险。</p>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <el-button @click="finishSensitive(true)">仍要继续</el-button>
+          <el-button type="primary" autofocus @click="finishSensitive(false)">返回</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
