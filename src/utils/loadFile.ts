@@ -1,7 +1,31 @@
-export const fetchFile = (url: string) => {
-  return fetch(url, {
-    method: 'GET',
-  })
+export const fetchFile = async (url: string, signal?: AbortSignal): Promise<Response> => {
+  let response: Response
+
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      signal,
+    })
+  } catch (e) {
+    // 主动取消交给调用方处理，不包装成网络错误
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      throw e
+    }
+
+    throw new Error('文件下载失败，请检查网络连接')
+  }
+
+  if (!response.ok) {
+    // 预签名链接过期或被清理时，存储端返回的是错误体（通常是 XML），
+    // 不在这里拦截会被当成密文继续解密，最终抛出难以理解的加密异常
+    if (response.status === 403 || response.status === 404 || response.status === 410) {
+      throw new Error('文件链接已失效，可能已过期或被删除')
+    }
+
+    throw new Error(`文件下载失败（HTTP ${response.status}）`)
+  }
+
+  return response
 }
 
 export const splitBuffer = (buffer: ArrayBuffer): ArrayBuffer[] => {
