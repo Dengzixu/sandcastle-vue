@@ -117,6 +117,11 @@ const _downloadFile = async (
 }
 
 const handleDownload = () => {
+  if (!blobUrl.value) {
+    _errorMessage('文件尚未加载完成，请稍后再试')
+    return
+  }
+
   const tempAElement = document.createElement('a')
 
   tempAElement.href = blobUrl.value
@@ -130,63 +135,70 @@ const handleCopy = () => {
   })
 }
 
-onBeforeMount(() => {
-  _loadFileInfo()
-    .then(() => {
-      status.value.hidden = !(fileInfo.value.flag === 0)
+// 下载并解密文件，失败时统一置为错误状态并提示
+const _loadBlob = async () => {
+  try {
+    blobUrl.value = await _downloadFile(
+      fileInfo.value.url,
+      fileInfo.value.title,
+      fileInfo.value.contentType,
+    )
+  } catch (e) {
+    status.value.error = true
+    status.value.errorMsg = e instanceof Error ? e.message : String(e)
+    _errorMessage(`文件加载失败：${status.value.errorMsg}`)
+  } finally {
+    status.value.loading = false
+  }
+}
 
-      if (status.value.hidden) {
-        const tags: VNode[] = [
-          h('p', () => '文件上传者已声明文件可能存在以下内容：'),
-          ...[
-            { bit: 1, label: '色情' },
-            { bit: 2, label: '敏感' },
-            { bit: 4, label: '血腥' },
-            { bit: 8, label: '暴力' },
-          ].flatMap(({ bit, label }) => {
-            return (fileInfo.value.flag & bit) === bit
-              ? h(ElTag, { class: 'mr-2', type: 'danger', effect: 'dark' }, () => label)
-              : []
-          }),
-        ]
+onBeforeMount(async () => {
+  try {
+    await _loadFileInfo()
+  } catch (e) {
+    status.value.loading = false
+    status.value.error = true
+    status.value.errorMsg = e instanceof Error ? e.message : String(e)
+    _errorMessage(status.value.errorMsg)
+    return
+  }
 
-        ElMessageBox({
-          title: '敏感内容警告',
-          message: h('div', tags),
-          type: 'warning',
-          showCancelButton: true,
-          closeOnClickModal: false,
-          confirmButtonText: '继续',
-          confirmButtonType: 'danger',
-        })
-          .then(() => {
-            _downloadFile(
-              fileInfo.value.url,
-              fileInfo.value.title,
-              fileInfo.value.contentType,
-            ).then((url) => {
-              blobUrl.value = url
-              status.value.loading = false
-            })
-          })
-          .catch(() => {
-            router.push({ name: 'home' })
-          })
-      } else {
-        _downloadFile(fileInfo.value.url, fileInfo.value.title, fileInfo.value.contentType).then(
-          (url) => {
-            blobUrl.value = url
-            status.value.loading = false
-          },
-        )
-      }
-    })
-    .catch((e) => {
+  status.value.hidden = !(fileInfo.value.flag === 0)
+
+  if (status.value.hidden) {
+    const tags: VNode[] = [
+      h('p', () => '文件上传者已声明文件可能存在以下内容：'),
+      ...[
+        { bit: 1, label: '色情' },
+        { bit: 2, label: '敏感' },
+        { bit: 4, label: '血腥' },
+        { bit: 8, label: '暴力' },
+      ].flatMap(({ bit, label }) => {
+        return (fileInfo.value.flag & bit) === bit
+          ? h(ElTag, { class: 'mr-2', type: 'danger', effect: 'dark' }, () => label)
+          : []
+      }),
+    ]
+
+    try {
+      await ElMessageBox({
+        title: '敏感内容警告',
+        message: h('div', tags),
+        type: 'warning',
+        showCancelButton: true,
+        closeOnClickModal: false,
+        confirmButtonText: '继续',
+        confirmButtonType: 'danger',
+      })
+    } catch {
+      // 用户取消或关闭警告时返回首页
       status.value.loading = false
-      status.value.error = true
-      status.value.errorMsg = e.message
-      _errorMessage(e.message)
-    })
+      router.push({ name: 'home' })
+      return
+    }
+  }
+
+  await _loadBlob()
 })
 
 onBeforeUnmount(() => {

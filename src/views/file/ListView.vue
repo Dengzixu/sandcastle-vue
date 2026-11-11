@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import {
-  ElButton,
   ElDivider,
   ElPageHeader,
   ElTable,
@@ -110,11 +109,11 @@ onBeforeMount(() => {
           </el-space>
         </template>
       </el-table-column>
-<!--      <el-table-column label="操作">-->
-<!--        <template #default="scope">-->
-<!--          <el-button type="danger" size="small" disabled>删除</el-button>-->
-<!--        </template>-->
-<!--      </el-table-column>-->
+      <!--      <el-table-column label="操作">-->
+      <!--        <template #default="scope">-->
+      <!--          <el-button type="danger" size="small" disabled>删除</el-button>-->
+      <!--        </template>-->
+      <!--      </el-table-column>-->
     </el-table>
   </div>
 </template>

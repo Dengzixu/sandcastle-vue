@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, reactive, ref, render } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ElAlert,
@@ -9,8 +9,6 @@ import {
   ElCheckboxGroup,
   ElDivider,
   ElForm,
-  ElFormItem,
-  ElInput,
   ElMessage,
   ElOption,
   ElProgress,
@@ -20,6 +18,7 @@ import { useUserStore } from '@/stores/user'
 import { FakeProgress } from '@/utils/FakeProgress'
 import FileApi from '@/api/FileApi'
 import { errorMessage } from '@/utils/message'
+import { formatBytes } from '@/utils/formatBytes'
 
 const siteTitle = import.meta.env.VITE_SITE_TITLE
 
@@ -30,34 +29,33 @@ const fileApi = new FileApi(import.meta.env.VITE_SANDCASTLE_API as string)
 const fake = reactive(new FakeProgress({ timeConstant: 10000 }))
 
 const file = ref<File | undefined>(undefined)
+const fileInput = ref<HTMLInputElement | null>(null)
 const onUpload = ref(false)
 const formValue = reactive({
-  flags: [],
+  flags: [] as number[],
   validityPeriod: 1,
   password: '',
 })
 
 const handleChooseFile = () => {
-  const input = document.querySelector('#choose-file') as HTMLInputElement
-  input?.click()
+  fileInput.value?.click()
 }
 
 const handleChange = (event: Event) => {
   const input = event.target as HTMLInputElement
+  const picked = input.files?.[0]
 
-  if (!input.files) {
+  if (!picked) {
     return
-  } else if (!input.files[0]?.type?.startsWith('image')) {
+  } else if (!picked.type.startsWith('image')) {
     errorMessage('目前只支持图片文件')
+    // 保持状态与界面一致，并允许重新选择同一个文件
+    file.value = undefined
+    input.value = ''
     return
   }
 
-  file.value = input.files[0]
-
-  render(
-    h(ElAlert, { type: 'success', closable: false }, () => file.value!.name),
-    document.querySelector('#FHfcfas')!,
-  )
+  file.value = picked
 }
 
 const handlePublish = () => {
@@ -160,9 +158,22 @@ const handlePublish = () => {
             的文件
           </p>
 
-          <div id="FHfcfas"></div>
+          <el-alert
+            v-if="file"
+            class="mt-4"
+            type="success"
+            :closable="false"
+            show-icon
+            :title="`${file.name} · ${formatBytes(file.size)}`"
+          />
 
-          <input id="choose-file" class="hidden" type="file" @change="handleChange" />
+          <input
+            ref="fileInput"
+            class="hidden"
+            type="file"
+            accept="image/*"
+            @change="handleChange"
+          />
 
           <el-divider border-style="dashed" />
         </div>
@@ -172,10 +183,10 @@ const handlePublish = () => {
             <div>
               <label class="mb-2 block text-sm font-medium text-gray-700">安全设置</label>
               <el-checkbox-group v-model="formValue.flags" class="flex flex-wrap gap-3">
-                <el-checkbox label="1"> 色情 </el-checkbox>
-                <el-checkbox label="2"> 敏感 </el-checkbox>
-                <el-checkbox label="4"> 血腥 </el-checkbox>
-                <el-checkbox label="8"> 暴力 </el-checkbox>
+                <el-checkbox :value="1"> 色情 </el-checkbox>
+                <el-checkbox :value="2"> 敏感 </el-checkbox>
+                <el-checkbox :value="4"> 血腥 </el-checkbox>
+                <el-checkbox :value="8"> 暴力 </el-checkbox>
               </el-checkbox-group>
             </div>
 
@@ -194,9 +205,9 @@ const handlePublish = () => {
             </div>
 
             <!--            密码暂时不可用-->
-            <el-form-item label="密码" v-if="false">
-              <el-input type="password" v-model="formValue.password" />
-            </el-form-item>
+            <!--            <el-form-item label="密码" v-if="false">-->
+            <!--              <el-input type="password" v-model="formValue.password" />-->
+            <!--            </el-form-item>-->
 
             <div class="mt-2 flex">
               <el-button
