@@ -21,7 +21,7 @@ const handleLogOut = () => {
 
     <div class="ml-auto">
       <el-dropdown class="flex items-center" v-if="userStore.isLogin">
-        <div class="text-base">欢迎, {{ userStore.userInfo?.username }}</div>
+        <div class="text-base focus:outline-hidden">欢迎, {{ userStore.userInfo?.username }}</div>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item @click="router.push('/file/list')">我的文件</el-dropdown-item>
@@ -43,5 +43,3 @@ const handleLogOut = () => {
     </div>
   </div>
 </template>
-
-<style></style>
