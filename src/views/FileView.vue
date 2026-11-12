@@ -7,6 +7,7 @@ import {
   ElButtonGroup,
   ElDialog,
   ElImage,
+  ElInput,
   ElResult,
   ElSkeleton,
   ElSkeletonItem,
@@ -209,19 +210,42 @@ const handleRetry = () => window.location.reload()
 
 const handleGoHome = () => router.push({ name: 'home' })
 
-const handleCopy = async () => {
-  // 用 UUID 生成规范链接：丢掉 query/hash，也不把数字 ID 形式的地址分享出去
+// 当前预览页面的规范地址：用 UUID 生成，丢掉 query/hash，也不把数字 ID 形式的地址分享出去
+const imagePageUrl = computed(() => {
+  if (!fileInfo.value.fileUuid) return ''
+
   const href = router.resolve({ name: 'file', params: { id: fileInfo.value.fileUuid } }).href
-  const url = new URL(href, window.location.origin).href
+
+  return new URL(href, window.location.origin).href
+})
+
+// 元信息里展示的文件 API 地址：按 UUID 查询该文件元信息的后端接口，始终拼绝对地址便于直接使用
+const fileApiUrl = computed(() => {
+  if (!fileInfo.value.fileUuid) return ''
+
+  return `${fileApi.host().replace(/\/+$/, '')}/file/api/v1/uuid/${fileInfo.value.fileUuid}`
+})
+
+// 两个地址框共用一套复制逻辑：复制失败时提示手动选中
+const _copyAddress = async (text: string, successMsg: string) => {
+  if (!text) {
+    errorMessage('地址为空，无法复制')
+    return
+  }
 
   try {
-    await navigator.clipboard.writeText(url)
-    successMessage('链接已复制')
+    await navigator.clipboard.writeText(text)
+    successMessage(successMsg)
   } catch {
-    // 权限被拒或页面未聚焦时 writeText 会 reject
-    errorMessage('复制失败，请手动复制地址栏中的链接')
+    errorMessage('复制失败，请手动选中输入框中的地址')
   }
 }
+
+const handleCopy = () => _copyAddress(imagePageUrl.value, '链接已复制')
+
+const handleCopyFileUrl = () => _copyAddress(fileApiUrl.value, '文件 API 地址已复制')
+
+const handleCopyImageUrl = () => _copyAddress(imagePageUrl.value, '图片地址已复制')
 
 // 下载并解密文件，失败时统一置为错误状态并提示
 const _loadBlob = async () => {
@@ -327,7 +351,7 @@ onBeforeMount(async () => {
     status.value.loading = false
 
     if (!disposed) {
-      router.push({ name: 'home' })
+      await router.push({ name: 'home' })
     }
 
     return
@@ -386,52 +410,90 @@ onBeforeUnmount(() => {
 
     <template v-else>
       <article class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-          <div class="min-w-0">
-            <h1
-              class="line-clamp-2 text-lg font-semibold break-all text-gray-900 sm:text-xl md:text-2xl"
-              :title="fileInfo.title"
-            >
-              {{ fileInfo.title }}
-            </h1>
-
-            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
-              <span class="inline-flex items-center gap-1">
-                <span class="icon-[material-symbols--hard-drive] text-base text-gray-400"></span>
-                {{ formatBytes(fileInfo.size) }}
-              </span>
-              <span class="inline-flex items-center gap-1">
-                <span class="icon-[material-symbols--schedule] text-base text-gray-400"></span>
-                上传于 {{ toMinute(fileInfo.createTime) }}
-              </span>
-              <span
-                v-if="fileExtension"
-                class="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs font-medium tracking-wide text-gray-500"
+        <div class="p-5 sm:p-6">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="min-w-0">
+              <h1
+                class="line-clamp-2 text-lg font-semibold break-all text-gray-900 sm:text-xl md:text-2xl"
+                :title="fileInfo.title"
               >
-                {{ fileExtension }}
-              </span>
+                {{ fileInfo.title }}
+              </h1>
+
+              <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+                <span class="inline-flex items-center gap-1">
+                  <span class="icon-[material-symbols--hard-drive] text-base text-gray-400"></span>
+                  {{ formatBytes(fileInfo.size) }}
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <span class="icon-[material-symbols--schedule] text-base text-gray-400"></span>
+                  上传于 {{ toMinute(fileInfo.createTime) }}
+                </span>
+                <span
+                  v-if="fileExtension"
+                  class="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs font-medium tracking-wide text-gray-500"
+                >
+                  {{ fileExtension }}
+                </span>
+              </div>
             </div>
+
+            <!-- Element Plus 的 .el-button-group--horizontal 是 display:inline-block + float 子元素，
+                 属于未分层样式，会盖掉 Tailwind 的 flex；这里用 ! 强制成 flex，窄屏才能让按钮均分整行 -->
+            <el-button-group class="flex! w-full shrink-0 sm:w-auto">
+              <!-- 复制链接按钮暂时隐藏：逻辑保留，后续确认不再需要时直接删除 -->
+              <el-button
+                v-if="false"
+                class="flex-1 sm:flex-none"
+                :loading="status.loading"
+                @click="handleCopy"
+              >
+                复制链接
+              </el-button>
+              <el-button
+                class="flex-1 sm:flex-none"
+                type="primary"
+                :loading="status.loading"
+                @click="handleDownload"
+              >
+                下载文件
+              </el-button>
+            </el-button-group>
           </div>
 
-          <!-- Element Plus 的 .el-button-group--horizontal 是 display:inline-block + float 子元素，
-               属于未分层样式，会盖掉 Tailwind 的 flex；这里用 ! 强制成 flex，窄屏才能让按钮均分整行 -->
-          <el-button-group class="flex! w-full shrink-0 sm:w-auto">
-            <el-button class="flex-1 sm:flex-none" :loading="status.loading" @click="handleCopy">
-              复制链接
-            </el-button>
-            <el-button
-              class="flex-1 sm:flex-none"
-              type="primary"
-              :loading="status.loading"
-              @click="handleDownload"
-            >
-              下载文件
-            </el-button>
-          </el-button-group>
+          <!-- 文件地址区：后端 API 地址与当前预览页面的地址，各自配一个复制按钮 -->
+          <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <span class="shrink-0 text-sm whitespace-nowrap text-gray-500 sm:w-32">
+                图片地址：
+              </span>
+              <el-input
+                class="w-full sm:flex-1"
+                :model-value="imagePageUrl"
+                readonly
+                placeholder="暂无图片地址"
+                :title="imagePageUrl"
+              />
+              <el-button class="shrink-0" @click="handleCopyImageUrl">复制</el-button>
+            </div>
+
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <span class="shrink-0 text-sm whitespace-nowrap text-gray-500 sm:w-32">
+                图片 API 地址：
+              </span>
+              <el-input
+                class="w-full sm:flex-1"
+                :model-value="fileApiUrl"
+                readonly
+                placeholder="暂无文件 API 地址"
+                :title="fileApiUrl"
+              />
+              <el-button class="shrink-0" @click="handleCopyFileUrl">复制</el-button>
+            </div>
+          </div>
         </div>
 
-        <!-- 预览区和信息区共用一张卡片：浅色底从卡片边缘铺到底，底部圆角由卡片的 overflow-hidden 裁出，
-             不再额外套一层自己的圆角与边框 -->
+        <!-- 预览区用浅色底和上方白色信息区区分开；底部圆角统一由卡片的 overflow-hidden 裁出 -->
         <div class="border-t border-gray-100 bg-gray-50 p-4 sm:p-6">
           <div class="flex justify-center">
             <el-skeleton class="flex justify-center" animated :loading="status.loading">
