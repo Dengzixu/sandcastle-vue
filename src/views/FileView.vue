@@ -32,6 +32,8 @@ const status = ref({
 const previewError = ref('')
 // 元信息是否已就绪：未就绪时只渲染骨架，避免先闪一版空标题和 0 B 再被替换
 const infoReady = ref(false)
+// 更多文件信息默认折叠，方便后续继续往里追加条目
+const showMore = ref(false)
 
 // 敏感内容确认弹窗：用 Promise 包一层，让 onBeforeMount 能 await 用户的选择
 const showSensitiveDialog = ref(false)
@@ -461,8 +463,8 @@ onBeforeUnmount(() => {
             </el-button-group>
           </div>
 
-          <!-- 文件地址区：后端 API 地址与当前预览页面的地址，各自配一个复制按钮 -->
-          <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
+          <!-- 文件地址区：当前预览页面地址常驻展示；其余信息收进「查看更多」，后续可直接往里面追加条目 -->
+          <div class="mt-4 border-t border-gray-100 pt-4">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
               <span class="shrink-0 text-sm whitespace-nowrap text-gray-500 sm:w-32">
                 图片地址：
@@ -477,18 +479,33 @@ onBeforeUnmount(() => {
               <el-button class="shrink-0" @click="handleCopyImageUrl">复制</el-button>
             </div>
 
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <span class="shrink-0 text-sm whitespace-nowrap text-gray-500 sm:w-32">
-                图片 API 地址：
-              </span>
-              <el-input
-                class="w-full sm:flex-1"
-                :model-value="fileApiUrl"
-                readonly
-                placeholder="暂无文件 API 地址"
-                :title="fileApiUrl"
-              />
-              <el-button class="shrink-0" @click="handleCopyFileUrl">复制</el-button>
+            <!-- 只提供一个「查看更多」入口：点开后永久展示，不再支持收起 -->
+            <div v-if="!showMore" class="mt-3">
+              <button
+                type="button"
+                class="cursor-pointer rounded text-sm text-gray-500 transition-colors hover:text-gray-800 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                aria-controls="file-more-info"
+                @click="showMore = true"
+              >
+                查看更多
+              </button>
+            </div>
+
+            <!-- 直接硬展开，不做过渡动画 -->
+            <div v-if="showMore" id="file-more-info" class="space-y-2 pt-2">
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <span class="shrink-0 text-sm whitespace-nowrap text-gray-500 sm:w-32">
+                  图片 API 地址：
+                </span>
+                <el-input
+                  class="w-full sm:flex-1"
+                  :model-value="fileApiUrl"
+                  readonly
+                  placeholder="暂无文件 API 地址"
+                  :title="fileApiUrl"
+                />
+                <el-button class="shrink-0" @click="handleCopyFileUrl">复制</el-button>
+              </div>
             </div>
           </div>
         </div>
