@@ -30,6 +30,10 @@ const status = ref({
 })
 // 文件内容（下载 / 解密）失败，只影响预览区域，元信息依然可用
 const previewError = ref('')
+// 视频解码失败时隐藏 <video>，改用错误文案占位
+const videoError = ref(false)
+// 视频默认不下载：用户点「预览文件」或「下载文件」后才拉取二进制
+const videoLoadRequested = ref(false)
 // 元信息是否已就绪：未就绪时只渲染骨架，避免先闪一版空标题和 0 B 再被替换
 const infoReady = ref(false)
 // 更多文件信息默认折叠，方便后续继续往里追加条目
@@ -73,6 +77,17 @@ const fileInfo = ref({
 const fileExtension = computed(() => {
   const dotIndex = fileInfo.value.title.lastIndexOf('.')
   return dotIndex > 0 ? fileInfo.value.title.slice(dotIndex + 1).toUpperCase() : ''
+})
+
+// MP4 走 <video> 预览，图片走 <el-image>；
+// content_type 以服务端记录为准，缺失或不可信时退回扩展名判断
+const isVideo = computed(() => {
+  const type = fileInfo.value.contentType.toLowerCase()
+
+  if (type.startsWith('video/')) return true
+  if (type.startsWith('image/')) return false
+
+  return fileExtension.value === 'MP4'
 })
 
 // 时间只展示到分钟，避免一行元信息过长
@@ -189,10 +204,30 @@ const _sanitizeFileName = (name: string): string => {
   return cleaned.length > 0 ? cleaned : '未命名文件'
 }
 
-const handleDownload = () => {
+const handleDownload = async () => {
   if (!blobUrl.value) {
-    errorMessage(previewError.value ? '文件加载失败，无法下载' : '文件尚未加载完成，请稍后再试')
-    return
+    if (status.value.loading) {
+      errorMessage('文件正在加载，请稍后再试')
+      return
+    }
+
+    let attemptedLoad = false
+
+    // 视频按需加载：直接点下载时也先拉取二进制，不要求用户先预览
+    if (isVideo.value) {
+      attemptedLoad = true
+      videoLoadRequested.value = true
+      await _loadBlob()
+    }
+
+    if (!blobUrl.value) {
+      // 刚触发的加载失败已经由 _loadBlob 提示过，这里不再重复弹错
+      if (!attemptedLoad) {
+        errorMessage(previewError.value ? '文件加载失败，无法下载' : '文件尚未加载完成，请稍后再试')
+      }
+
+      return
+    }
   }
 
   const tempAElement = document.createElement('a')
@@ -247,11 +282,20 @@ const handleCopy = () => _copyAddress(imagePageUrl.value, '链接已复制')
 
 const handleCopyFileUrl = () => _copyAddress(fileApiUrl.value, '文件 API 地址已复制')
 
-const handleCopyImageUrl = () => _copyAddress(imagePageUrl.value, '图片地址已复制')
+const handleCopyImageUrl = () => _copyAddress(imagePageUrl.value, '文件地址已复制')
+
+// 视频元素自身解码失败（容器损坏 / 编码不支持），交给错误文案占位
+const handleVideoError = () => {
+  videoError.value = true
+}
 
 // 下载并解密文件，失败时统一置为错误状态并提示
 const _loadBlob = async () => {
   if (disposed) return
+
+  status.value.loading = true
+  previewError.value = ''
+  videoError.value = false
 
   // 防御性处理：重复触发时先取消上一次请求
   pendingLoad?.abort()
@@ -292,6 +336,14 @@ const _loadBlob = async () => {
       }
     }
   }
+}
+
+// 视频按需加载：点击「预览文件」后才拉取并解密二进制
+const handlePreviewVideo = () => {
+  if (status.value.loading) return
+
+  videoLoadRequested.value = true
+  void _loadBlob()
 }
 
 const SENSITIVE_LABELS = [
@@ -356,6 +408,13 @@ onBeforeMount(async () => {
       await router.push({ name: 'home' })
     }
 
+    return
+  }
+
+  // 视频体积可能较大：先只渲染「预览文件」按钮，点击后再下载解密；
+  // 图片仍保持打开即加载
+  if (isVideo.value) {
+    status.value.loading = false
     return
   }
 
@@ -467,13 +526,13 @@ onBeforeUnmount(() => {
           <div class="mt-4 border-t border-gray-100 pt-4">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
               <span class="shrink-0 text-sm whitespace-nowrap text-gray-500 sm:w-32">
-                图片地址：
+                文件地址：
               </span>
               <el-input
                 class="w-full sm:flex-1"
                 :model-value="imagePageUrl"
                 readonly
-                placeholder="暂无图片地址"
+                :placeholder="`暂无文件地址`"
                 :title="imagePageUrl"
               />
               <el-button class="shrink-0" @click="handleCopyImageUrl">复制</el-button>
@@ -495,7 +554,7 @@ onBeforeUnmount(() => {
             <div v-if="showMore" id="file-more-info" class="space-y-2 pt-2">
               <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <span class="shrink-0 text-sm whitespace-nowrap text-gray-500 sm:w-32">
-                  图片 API 地址：
+                  文件 API 地址：
                 </span>
                 <el-input
                   class="w-full sm:flex-1"
@@ -513,14 +572,38 @@ onBeforeUnmount(() => {
         <!-- 预览区用浅色底和上方白色信息区区分开；底部圆角统一由卡片的 overflow-hidden 裁出 -->
         <div class="border-t border-gray-100 bg-gray-50 p-4 sm:p-6">
           <div class="flex justify-center">
-            <el-skeleton class="flex justify-center" animated :loading="status.loading">
+            <el-skeleton v-if="status.loading" class="flex justify-center" animated>
               <template #template>
                 <el-skeleton-item class="min-h-48 min-w-48" variant="image" />
               </template>
+            </el-skeleton>
 
-              <!-- blobUrl 为空时不要渲染 el-image：空的 src 会被浏览器解析成当前页面地址 -->
+            <!-- 视频默认不拉取二进制：先展示预览入口，点击后再下载解密 -->
+            <div
+              v-else-if="isVideo && !videoLoadRequested"
+              class="flex min-h-48 w-full flex-col items-center justify-center gap-3 py-8 text-center"
+            >
+              <span class="icon-[material-symbols--video-file] text-5xl text-gray-300"></span>
+              <p class="text-sm text-gray-500">点击预览文件继续加载</p>
+              <el-button type="primary" @click="handlePreviewVideo">预览文件</el-button>
+            </div>
+
+            <!-- blobUrl 为空时不要渲染媒体元素：空的 src 会被浏览器解析成当前页面地址 -->
+            <template v-else-if="blobUrl && !videoError">
+              <video
+                v-if="isVideo"
+                class="max-h-[70vh] w-auto max-w-full rounded-lg bg-black"
+                :src="blobUrl"
+                controls
+                playsinline
+                preload="metadata"
+                @error="handleVideoError"
+              >
+                你的浏览器不支持视频播放，请下载后观看。
+              </video>
+
               <el-image
-                v-if="blobUrl"
+                v-else
                 class="min-h-48 min-w-48"
                 :src="blobUrl"
                 fit="scale-down"
@@ -534,9 +617,14 @@ onBeforeUnmount(() => {
                   </div>
                 </template>
               </el-image>
+            </template>
 
-              <p v-else-if="previewError" class="text-red-600">文件加载失败：{{ previewError }}</p>
-            </el-skeleton>
+            <p v-else-if="videoError" class="text-red-600">视频加载失败，文件可能已损坏</p>
+
+            <div v-else-if="previewError" class="flex flex-col items-center gap-3">
+              <p class="text-red-600">文件加载失败：{{ previewError }}</p>
+              <el-button v-if="isVideo" @click="handlePreviewVideo">重试</el-button>
+            </div>
           </div>
         </div>
       </article>

@@ -19,6 +19,7 @@ import { FakeProgress } from '@/utils/FakeProgress'
 import FileApi from '@/api/FileApi'
 import { errorMessage } from '@/utils/message'
 import { formatBytes } from '@/utils/formatBytes'
+import { MAX_UPLOAD_SIZE_LABEL, UPLOAD_ACCEPT, validateUploadFile } from '@/utils/uploadRules'
 
 const siteTitle = import.meta.env.VITE_SITE_TITLE
 
@@ -93,8 +94,11 @@ const applyFile = (picked: File): boolean => {
     return false
   }
 
-  if (!picked.type.startsWith('image')) {
-    errorMessage('目前只支持图片文件')
+  // 类型与大小用同一套规则校验，拖拽和选择框走的是同一个入口
+  const invalidReason = validateUploadFile(picked)
+
+  if (invalidReason) {
+    errorMessage(invalidReason)
     file.value = undefined
     return false
   }
@@ -313,9 +317,13 @@ const handlePublish = async () => {
             ref="fileInput"
             class="hidden"
             type="file"
-            accept="image/*"
+            :accept="UPLOAD_ACCEPT"
             @change="handleChange"
           />
+
+          <p class="mt-3 text-xs text-gray-500">
+            支持图片与 MP4 视频，单个文件大小不能超过 {{ MAX_UPLOAD_SIZE_LABEL }}
+          </p>
 
           <el-divider border-style="dashed" />
         </div>
